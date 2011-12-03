@@ -1,0 +1,34 @@
+This should serve as a fast way to generate merger trees out of gadget snapshots.
+
+We use the rockstar halo finder (http://code.google.com/p/rockstar/) and consistent-trees (http://code.google.com/p/consistent-trees/) by Peter Behroozi.
+
+1) Building Rockstar:
+Simply type make in the Rockstar directory
+
+2) Building Consistent-Trees:
+Using consistent_trees-0.96.1, typing make gives an error that the linking of
+math.h went wrong. This can be fixed by adding -lm to OFLAGS in src/Makefile (already
+corrected in this repo). Apart from that, make should work without problems.
+
+2) Running Rockstar:
+In the files rockstar-server.cfg and rockstar-client.cfg we have to specify the path
+to our snapshot files (INBASE) and the directory, where the output should be saved. We
+also have to provide a list with the filenames to be processed (snapshot_names.dat).
+To do this, one one can use the provided prepare_rockstar.py and giving the snapshot directory
+as argument, the *.cfg file are updated automatically, and also the snapshot_names is generated.
+After this is done, we can start Rockstar through
+./rockstar -c rockstar-server.cfg
+./rockstar -c rockstar-client.cfg
+
+3) Running Consistent-Trees
+First we have to generate the DescScales.txt. To do this, execute
+python extract_scales.py
+Then we switch into the consistent_trees directory and start consistent_trees via the command
+perl do_merger_tree.pl ../ctree.cfg
+
+TODO:
+- ask peter about importance of the h values which can be given to rockstar and consistent_trees
+
+That's it :-)
+
+

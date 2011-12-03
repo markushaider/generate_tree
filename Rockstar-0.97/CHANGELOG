@@ -1,0 +1,8 @@
+v0.97:
+*) Fixed a race condition which was halting execution for snapshots without any halos.
+*) Included config files to run on the Ranger machine at TACC.
+*) Added YT support (from Matt Turk).
+*) Added initial/alpha support for reading TIPSY files (from Greg Stinson).
+
+v0.96.2 (10/20/2011):
+Initial public release
