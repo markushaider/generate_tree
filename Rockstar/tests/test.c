@@ -1,14 +1,24 @@
-#include "../nfw.c"
+#include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+#include "bounds.c"
 
 int main(void) {
-  char buffer[1024];
-  double mvir, rvir, vmax, rvmax, scale, oldrs;
-  while (fgets(buffer, 1024, stdin)) {
-    if (sscanf(buffer, "%lf %lf %lf %lf %lf %lf", &mvir, &rvir, &vmax, &rvmax, &scale, &oldrs) < 6) continue;
-    float fc = 0;
-    float rs = calc_scale_radius(mvir, rvir, vmax, rvmax, scale);
-    //printf("Scale radius: %f; c: %f\n", rs, rvir/rs);
-    printf("%f %f %f %f %f %f %f\n", mvir, vmax, rvir/rs, rvir/oldrs, fc, rvir, vmax/cbrt(mvir));
+  float bounds[6];
+  float particle[3] = {0, 4, 0};
+  int64_t in_bounds = 0;
+  float newpos[3];
+  float a[3], b[3];
+  int64_t i;
+  BOX_SIZE=1;
+  PERIODIC=1;
+
+  sscanf("-1 -1 -1 2 2 2", "%f %f %f %f %f %f", bounds, bounds+1, bounds+2,
+	 bounds+3, bounds+4, bounds+5);
+  for (i=0; i<1073741824*0.2; i++) {
+    in_bounds+=_check_bounds(particle, newpos, bounds);
+    particle[0]+=1e-9;
   }
+  printf("Total: %"PRId64"\n", in_bounds);
   return 0;
 }

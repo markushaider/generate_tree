@@ -764,7 +764,7 @@ float find_median_r(float *rad, int64_t num_p, float frac) {
 
 
 void norm_sd(struct fof *f, float thresh) {
-  double pos[6] = {0}, pos2[6] = {0}, var[6] = {0};
+  double pos[6] = {0}, pos2[6] = {0}; //, var[6] = {0};
   double corr[6][6];
   double sig_x, sig_v;
   int64_t i,j,k;
@@ -786,7 +786,7 @@ void norm_sd(struct fof *f, float thresh) {
     }
 
   for (j=0; j<6; j++) {
-    var[j] = pos2[j]/(double)f->num_p;
+    //var[j] = pos2[j]/(double)f->num_p;
     for (k=j; k<6; k++)
       corr[j][k]/=(double)f->num_p;
   }

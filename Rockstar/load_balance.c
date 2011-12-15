@@ -121,6 +121,51 @@ void decide_chunks_for_volume_balance() {
   }
 }
 
+void decide_chunks_by_script() {
+  FILE *script;
+  int64_t n, i;
+  int port;
+  float bounds[6];
+  char buffer[1024];
+  
+  script = check_popen(LOAD_BALANCE_SCRIPT, "r+");
+  check_fprintf(script, "%"PRId64" #Num writers\n", NUM_WRITERS);
+  check_fprintf(script,"%"PRId64" %"PRId64" %"PRId64" #Recommended divisions\n",
+		chunks[0], chunks[1], chunks[2]);
+  check_fprintf(script, "%f #Box size (comoving Mpc/h)\n", BOX_SIZE);
+  check_fprintf(script, "%f #Current scale factor\n", SCALE_NOW);
+  check_fprintf(script, "#Format: ID IP_Address Port\n");
+  for (n=0; n<NUM_WRITERS; n++)
+    check_fprintf(script, "%"PRId64" %s %d\n", n,clients[n+NUM_READERS].address,
+		  clients[n+NUM_READERS].port);
+  check_fprintf(script, "#Expected Return Format: ID IP_Address Port min_x min_y min_z max_x max_y max_z\n");
+  for (n=0; n<NUM_WRITERS; n++) {
+    check_fgets(buffer, 1024, script);
+    if (sscanf(buffer, "%"SCNd64" %*s %d %f %f %f %f %f %f", &i, &port,
+	       bounds, bounds+1, bounds+2, bounds+3, bounds+4, bounds+5)<8 ||
+	(i != n) || (port != clients[n+NUM_READERS].port)) {
+      fprintf(stderr, "[Error] Received invalid format from load balance script!\n");
+      fprintf(stderr, "[Error] Offending line: %s", buffer);
+      fprintf(stderr, "[Error] Expected: %"PRId64" %s %d min_x min_y min_z max_x max_y max_z",
+	      n, clients[n+NUM_READERS].address, clients[n+NUM_READERS].port);
+      exit(1);
+    }
+    for (i=0; i<6; i++)
+      if (bounds[i]<0 || bounds[i] > BOX_SIZE) {
+	fprintf(stderr, "[Error] Received invalid format from load balance script!\n");
+	fprintf(stderr, "[Error] Offending line: %s", buffer);
+	fprintf(stderr, "[Error] Bounds must be within the range 0 to %f\n", BOX_SIZE);
+	exit(1);
+      }
+    memcpy(clients[NUM_READERS+n].bounds, bounds, sizeof(float)*6);
+    send_to_socket(clients[NUM_READERS+n].fd, "bnds", 4);
+    send_to_socket(clients[NUM_READERS+n].fd, clients[NUM_READERS+n].bounds,
+		   sizeof(float)*6);
+  }
+  pclose(script);
+}
+
+
 void decide_chunks_for_memory_balance() {
   struct projection *pr = NULL;
   int64_t num_proj, proj_start, todo, i, j, dir, offset;

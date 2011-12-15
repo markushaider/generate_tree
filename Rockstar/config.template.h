@@ -30,6 +30,7 @@ string(PARALLEL_IO_SERVER_PORT, "auto");
 integer(PARALLEL_IO_WRITER_PORT, 32001);
 string(PARALLEL_IO_SERVER_INTERFACE, "");
 string(RUN_ON_SUCCESS, "");
+string(LOAD_BALANCE_SCRIPT, "");
 
 string(INBASE, ".");
 string(FILENAME,"tests/halo_nfw");

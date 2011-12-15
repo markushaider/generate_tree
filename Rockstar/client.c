@@ -188,8 +188,7 @@ void check_halo_bounds(struct halo *h1, struct recipient *r) {
 }
 
 int64_t check_projection_bounds(struct particle *p1, struct projection *pr) {
-  float pos[3];
-  return (_check_bounds(p1->pos, pos, pr->bounds));
+  return (_check_bounds_raw(p1->pos, pr->bounds));
 }
 
 void send_config(int c) {
@@ -225,6 +224,7 @@ void recv_config(int c) {
 
 void send_particles(int c) {
   int64_t i,j;
+  char cmd[5] ={0};
   for (j=0; j<num_recipients; j++) 
     recipients[j].c = 
       connect_to_addr(recipients[j].address, recipients[j].port);
@@ -238,6 +238,11 @@ void send_particles(int c) {
   for (j=0; j<num_recipients; j++) {
     clear_particle_rbuffer(recipients+j);
     send_to_socket(recipients[j].c, "done", 4);
+  }
+  for (j=0; j<num_recipients; j++) {
+    recv_from_socket(recipients[j].c, cmd, 4);
+    if (strcmp(cmd, "done")!=0)
+      fprintf(stderr, "Couldn't confirm receipt of particle data!\n");
     close(recipients[j].c);
   }
   clear_recipients();
@@ -247,6 +252,7 @@ void send_particles(int c) {
 void send_halos(int c, int64_t snap, int64_t chunk) {
   int64_t i,j;
   struct binary_output_header bheader;
+  char cmd[5] = {0};
 
   load_binary_halos(snap, chunk, &bheader, &halos, &part_ids);
 
@@ -262,6 +268,12 @@ void send_halos(int c, int64_t snap, int64_t chunk) {
     send_to_socket(recipients[j].c, "cnfg", 4);
     send_config(recipients[j].c);
     send_to_socket(recipients[j].c, "done", 4);
+  }
+  for (j=0; j<num_recipients; j++) {
+    recv_from_socket(recipients[j].c, cmd, 4);
+    if (strcmp(cmd, "done")!=0)
+      fprintf(stderr, "Couldn't confirm receipt of particle data!\n");
+    close(recipients[j].c);
   }
 
   send_to_socket(c, "done", 4);
@@ -280,7 +292,7 @@ void close_connection(int fd, int *fdlist, int64_t *num_fds) {
   }
 }
 
-void receive_stuff(int s, int c, int timestep) {
+void receive_stuff(int s, int c, int64_t timestep) {
   int64_t i, j, num_senders = 0, done = 0, length, new_p_start;
   int *senders = NULL, max_fd = 0;
   fd_set fds;
@@ -368,7 +380,10 @@ void receive_stuff(int s, int c, int timestep) {
 	  recv_config(i);
 	}
 
-	else if (!strcmp(cmd, "done")) close_connection(i, senders, &num_senders);
+	else if (!strcmp(cmd, "done")) {
+	  send_to_socket(i, "done", 4);
+	  close_connection(i, senders, &num_senders);
+	}
 
 	else { fprintf(stderr, "[Error] Client protocol error rs (%s)!\n", cmd); exit(1); }
       }
@@ -639,7 +654,7 @@ void client(void) {
   char *hostname = NULL;
   char port[10] = {0};
   float bounds[6], box_size;
-  struct recipient *r;
+  //struct recipient *r;
   int c, s = -1, portnum, readers;
   int stat_loc;
   int64_t num_nodes;
@@ -777,7 +792,8 @@ void client(void) {
 
     else if (!strcmp(cmd, "rcpt")) {
       assert(type == READER_TYPE);
-      r = add_recipient(PARTICLE_RECIPIENT, c);
+      //r = 
+      add_recipient(PARTICLE_RECIPIENT, c);
     }
 
     else if (!strcmp(cmd, "xfrp")) {
@@ -816,7 +832,8 @@ void client(void) {
 
     else if (!strcmp(cmd, "rcph")) {
       assert(type == WRITER_TYPE);
-      r = add_recipient(HALO_RECIPIENT, c);
+      //r = 
+      add_recipient(HALO_RECIPIENT, c);
     }
 
     else if (!strcmp(cmd, "xfrh")) {

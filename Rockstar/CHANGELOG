@@ -1,4 +1,11 @@
-v0.97:
+v0.97.5:
+*) Increased the speed of boundary checks, so that initially distributing particles is now more efficient.
+*) Fixed an issue whereby duplicate halos could be output in merger trees; this only appears on certain versions of Linux when there are very few halos per processor.
+
+v0.97.1:
+*) Added support for user-configurable load-balancing.
+
+v0.97 (11/1/2011):
 *) Fixed a race condition which was halting execution for snapshots without any halos.
 *) Included config files to run on the Ranger machine at TACC.
 *) Added YT support (from Matt Turk).

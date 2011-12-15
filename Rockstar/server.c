@@ -169,7 +169,8 @@ void read_blocks(int64_t snap, int64_t pass) {
 
 void decide_chunks() {
   factor_3(NUM_WRITERS, chunks);
-  if (NUM_WRITERS == 1) decide_chunks_for_volume_balance();
+  if (strlen(LOAD_BALANCE_SCRIPT)) decide_chunks_by_script();
+  else if (NUM_WRITERS == 1) decide_chunks_for_volume_balance();
   else decide_chunks_for_memory_balance();
 }
 

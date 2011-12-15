@@ -4,7 +4,7 @@
 
 #define MAX_Z 100.0
 #define Z_BINS 1000.0
-#define TOTAL_BINS ((int)(MAX_Z*Z_BINS))
+#define TOTAL_BINS (((int)MAX_Z)*((int)Z_BINS))
 #define Omega_M Om
 #define Omega_L Ol
 #define h h0

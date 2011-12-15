@@ -28,6 +28,19 @@ FILE *check_fopen(char *filename, char *mode) {
   return res;
 }
 
+FILE *check_popen(char *command, char *mode) {
+  FILE *res = popen(command, mode);
+  if (res == NULL) {
+    fprintf(stderr, "[Error] Failed to start command %s!\n", command);
+    exit(1);
+  }
+#ifdef DEBUG_IO
+  fprintf(stderr, "[Note] Opened command %s with mode '%s' in fileno %d.\n", 
+	  command, mode, fileno(res));
+#endif /* DEBUG_IO */
+  return res;
+}
+
 void *check_realloc(void *ptr, size_t size, char *reason) {
   void *res = realloc(ptr, size);
   if ((res == NULL) && (size > 0)) {
@@ -72,11 +85,18 @@ size_t check_fread(void *ptr, size_t size, size_t nitems, FILE *stream) {
   return nread;
 }
 
+char *check_fgets(char *ptr, size_t size, FILE *stream) {
+  char *res = fgets(ptr, size, stream);
+  if (res <= 0) _io_err(0, size, 1, stream);
+  return res;
+}
+
+
 size_t check_fwrite(void *ptr, size_t size, size_t nitems, FILE *stream) {
   size_t res = 1, nwritten = 0;
   while (nwritten < nitems) {
     res = fwrite(ptr, size, nitems, stream);
-    if (res <= 0) _io_err(1, size, nitems, stream);
+    if (res <= 0) _io_err(1, size-1, nitems, stream);
     nwritten += res;
   }
   return nwritten;

@@ -95,7 +95,7 @@ void get_output_filename(char *buffer, int maxlen, int64_t snap, int64_t chunk, 
 
 
 void read_particles(char *filename) {
-  int64_t i, j, gadget = 0, gadget_internal = 0, reset_origin = 0;
+  int64_t i, j, gadget = 0, gadget_internal = 0;
   int64_t p_start = num_p;
   float dx, ds, z, a, vel_mul;
   double *origin, origin_offset[3] = {0};
@@ -145,7 +145,6 @@ void read_particles(char *filename) {
 				LIGHTCONE_ALT_ORIGIN[i];
 	}
       } else { //Offset everything
-	reset_origin = 1;
 	for (i=0; i<3; i++) origin_offset[i] = -BOX_SIZE;
       }
       BOX_SIZE *= 2.0;
@@ -456,8 +455,14 @@ void output_merger_catalog(int64_t snap, int64_t chunk, struct halo *halos, int6
   struct flock fl = {0};
 
   snprintf(buffer, 1024, "%s/out_%"PRId64".list", OUTBASE, snap);
+  fl.l_type = F_WRLCK;
+  fl.l_whence = SEEK_SET;
+  fl.l_start = 0;
+  fl.l_len = 0;
+
   if (chunk == 0) {
     output = check_fopen(buffer, "w");
+    fcntl(fileno(output), F_SETLKW, &fl);
     fprintf(output, "#ID DescID M%s Vmax Vrms R%s Rs Np X Y Z VX VY VZ JX JY JZ Spin\n",
 	    MASS_DEFINITION, MASS_DEFINITION);
     fprintf(output, "#a = %f\n", SCALE_NOW);
@@ -472,17 +477,11 @@ void output_merger_catalog(int64_t snap, int64_t chunk, struct halo *halos, int6
 	    "#Units: Angular Momenta in (Msun/h) * (Mpc/h) * km/s (physical)\n"
 	    "#Units: Radii in kpc / h (comoving)\n");
     fprintf(output, "#Rockstar Version: %s\n", ROCKSTAR_VERSION);
-    fflush(output);
   }
   else {
     output = check_fopen(buffer, "a");
+    fcntl(fileno(output), F_SETLKW, &fl);
   }
-
-  fl.l_type = F_WRLCK;
-  fl.l_whence = SEEK_SET;
-  fl.l_start = 0;
-  fl.l_len = 10;
-  fcntl(fileno(output), F_SETLKW, &fl);
   
   for (i=0; i<num_halos; i++) {
     th = halos+i;
@@ -493,5 +492,6 @@ void output_merger_catalog(int64_t snap, int64_t chunk, struct halo *halos, int6
 	    th->num_p, th->pos[0], th->pos[1], th->pos[2], th->pos[3],
 	    th->pos[4], th->pos[5], th->J[0], th->J[1], th->J[2], th->spin);
   }
+  fflush(output);
   fclose(output); //Also unlocks the file
 }

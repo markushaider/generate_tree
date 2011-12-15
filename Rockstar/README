@@ -415,6 +415,19 @@ Contents:
       followed by the snapshot name (only different if specified via the
       SNAPSHOT_NAMES file).
 
+      To specify your own load-balancing distribution, you can use the
+      LOAD_BALANCE_SCRIPT option.  There is an example of such a script in
+      the scripts directory; to use, set the LOAD_BALANCE_SCRIPT option to
+      "perl /path/to/rockstar/scripts/sample_loadbalance.pl".  The script is
+      given the number of writer tasks, the recommended dimensional divisions,
+      the box size, the scale factor, as well as the IP addresses and ports
+      of all the writer tasks.  The script is expected to reoutput the
+      information for each writer task along with an additional set of six
+      numbers specifying the boundary region (min_x, min_y, min_z) to
+      (max_x, max_y, max_z).  The boundary region *must* be contained within
+      the box size in each dimension; the boundary regions are also assumed to
+      be overlapping (it is up to your script to check this).
+
     vii) Full Example Script
       For a full example configuration file, used for running on the Bolshoi
       simulation, see scripts/pleiades.cfg or scripts/ranger.cfg.
